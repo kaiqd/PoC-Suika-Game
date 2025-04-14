@@ -8,16 +8,34 @@
 import SpriteKit
 import GameplayKit
 
+enum FormaGeometrica: String, CaseIterable {
+    case circulo
+    case quadrado
+    case triangulo
+
+    var cor: UIColor {
+        switch self {
+        case .circulo: return .systemBlue
+        case .quadrado: return .systemRed
+        case .triangulo: return .systemGreen
+        }
+    }
+}
+
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var container: SKSpriteNode!
-    var circleCounter = 1
+    var formaSendoArrastada: SKShapeNode?
+    var proximaFormaTipo: FormaGeometrica = .circulo
+    var proximaFormaPreview: SKShapeNode?
 
     override func didMove(to view: SKView) {
+        backgroundColor = UIColor(red: 5/255, green: 10/255, blue: 20/255, alpha: 1)
         physicsWorld.contactDelegate = self
         physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
-        backgroundColor = .black
         setupContainer()
+        proximaFormaTipo = FormaGeometrica.allCases.randomElement() ?? .circulo
+        mostrarProximaForma()
     }
 
     func setupContainer() {
@@ -35,7 +53,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(container)
 
         let background = SKShapeNode(rectOf: CGSize(width: containerWidth, height: containerHeight))
-        background.fillColor = UIColor.systemBlue.withAlphaComponent(0.1)
+        background.fillColor = UIColor.white.withAlphaComponent(0.05)
         background.strokeColor = UIColor.white
         background.lineWidth = 3
         background.position = container.position
@@ -66,6 +84,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         forma.strokeColor = .clear
         forma.position = position
         forma.name = "\(tipo.rawValue)_\(level)"
+        forma.zPosition = 1
 
         forma.physicsBody = SKPhysicsBody(polygonFrom: forma.path ?? CGPath(rect: CGRect(x: -tamanho, y: -tamanho, width: tamanho * 2, height: tamanho * 2), transform: nil))
         forma.physicsBody?.restitution = 0.2
@@ -76,13 +95,49 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         return forma
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
+    func mostrarProximaForma() {
+        proximaFormaPreview?.removeFromParent()
 
-        let tipoAleatorio = FormaGeometrica.allCases.randomElement() ?? .circulo
-        let novaForma = createForma(tipo: tipoAleatorio, level: 1, position: CGPoint(x: location.x, y: location.y))
+        let preview = createForma(tipo: proximaFormaTipo, level: 1, position: .zero)
+        preview.setScale(0.5)
+        preview.position = CGPoint(x: 60, y: size.height - 60)
+        preview.physicsBody = nil
+        preview.zPosition = 100
+        proximaFormaPreview = preview
+        addChild(preview)
+    }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard formaSendoArrastada == nil,
+              let touch = touches.first else { return }
+
+        let pos = touch.location(in: self)
+        let novaForma = createForma(tipo: proximaFormaTipo, level: 1, position: pos)
+        novaForma.physicsBody = nil
+        formaSendoArrastada = novaForma
         addChild(novaForma)
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first,
+              let forma = formaSendoArrastada else { return }
+
+        let pos = touch.location(in: self)
+        forma.position = pos
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let forma = formaSendoArrastada else { return }
+
+        forma.physicsBody = SKPhysicsBody(polygonFrom: forma.path!)
+        forma.physicsBody?.restitution = 0.2
+        forma.physicsBody?.categoryBitMask = 1
+        forma.physicsBody?.contactTestBitMask = 1
+        forma.physicsBody?.collisionBitMask = 1
+        formaSendoArrastada = nil
+
+        proximaFormaTipo = FormaGeometrica.allCases.randomElement() ?? .circulo
+        mostrarProximaForma()
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
@@ -107,22 +162,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(novaForma)
     }
 
-
     func extractLevel(from name: String) -> Int {
         return Int(name.components(separatedBy: "_").last ?? "1") ?? 1
-    }
-}
-
-enum FormaGeometrica: String, CaseIterable {
-    case circulo
-    case quadrado
-    case triangulo
-
-    var cor: UIColor {
-        switch self {
-        case .circulo: return .systemBlue
-        case .quadrado: return .systemRed
-        case .triangulo: return .systemGreen
-        }
     }
 }
