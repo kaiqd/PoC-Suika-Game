@@ -25,7 +25,8 @@ enum FormaGeometrica: String, CaseIterable {
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var container: SKSpriteNode!
-    var formaSendoArrastada: SKShapeNode?
+    var formaSendoPreparada: SKShapeNode?
+    var pontoInicialToque: CGPoint?
     var proximaFormaTipo: FormaGeometrica = .circulo
     var proximaFormaPreview: SKShapeNode?
 
@@ -108,33 +109,43 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard formaSendoArrastada == nil,
-              let touch = touches.first else { return }
+        guard formaSendoPreparada == nil, let touch = touches.first else { return }
 
-        let pos = touch.location(in: self)
-        let novaForma = createForma(tipo: proximaFormaTipo, level: 1, position: pos)
+        pontoInicialToque = touch.location(in: self)
+        
+        let novaForma = createForma(tipo: proximaFormaTipo, level: 1, position: pontoInicialToque!)
         novaForma.physicsBody = nil
-        formaSendoArrastada = novaForma
+        formaSendoPreparada = novaForma
         addChild(novaForma)
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first,
-              let forma = formaSendoArrastada else { return }
+              let forma = formaSendoPreparada else { return }
 
         let pos = touch.location(in: self)
         forma.position = pos
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let forma = formaSendoArrastada else { return }
+        guard let touch = touches.first,
+              let forma = formaSendoPreparada,
+              let pontoInicial = pontoInicialToque else { return }
+
+        let pontoFinal = touch.location(in: self)
+        let vetor = CGVector(dx: pontoInicial.x - pontoFinal.x,
+                             dy: pontoInicial.y - pontoFinal.y)
 
         forma.physicsBody = SKPhysicsBody(polygonFrom: forma.path!)
         forma.physicsBody?.restitution = 0.2
         forma.physicsBody?.categoryBitMask = 1
         forma.physicsBody?.contactTestBitMask = 1
         forma.physicsBody?.collisionBitMask = 1
-        formaSendoArrastada = nil
+
+        forma.physicsBody?.applyImpulse(vetor)
+
+        formaSendoPreparada = nil
+        pontoInicialToque = nil
 
         proximaFormaTipo = FormaGeometrica.allCases.randomElement() ?? .circulo
         mostrarProximaForma()
