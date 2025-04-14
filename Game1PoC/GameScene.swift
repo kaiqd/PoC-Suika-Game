@@ -99,9 +99,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
+        guard let x = touches.first?.location(in: self).x else { return }
+        let pos = CGPoint(x: x, y: size.height - 20)
 
-        let pos = touch.location(in: self)
         let forma = createForma(tipo: proximaFormaTipo, level: 1, position: pos)
         addChild(forma)
 
