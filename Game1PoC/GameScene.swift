@@ -1,12 +1,4 @@
-//
-//  GameScene.swift
-//  Game1PoC
-//
-//  Created by Kaique Diniz on 11/04/25.
-//
-
 import SpriteKit
-import GameplayKit
 
 enum FormaGeometrica: String, CaseIterable {
     case circulo
@@ -25,8 +17,6 @@ enum FormaGeometrica: String, CaseIterable {
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var container: SKSpriteNode!
-    var formaSendoPreparada: SKShapeNode?
-    var pontoInicialToque: CGPoint?
     var proximaFormaTipo: FormaGeometrica = .circulo
     var proximaFormaPreview: SKShapeNode?
 
@@ -108,44 +98,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(preview)
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard formaSendoPreparada == nil, let touch = touches.first else { return }
-
-        pontoInicialToque = touch.location(in: self)
-        
-        let novaForma = createForma(tipo: proximaFormaTipo, level: 1, position: pontoInicialToque!)
-        novaForma.physicsBody = nil
-        formaSendoPreparada = novaForma
-        addChild(novaForma)
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first,
-              let forma = formaSendoPreparada else { return }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
 
         let pos = touch.location(in: self)
-        forma.position = pos
-    }
-
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first,
-              let forma = formaSendoPreparada,
-              let pontoInicial = pontoInicialToque else { return }
-
-        let pontoFinal = touch.location(in: self)
-        let vetor = CGVector(dx: pontoInicial.x - pontoFinal.x,
-                             dy: pontoInicial.y - pontoFinal.y)
-
-        forma.physicsBody = SKPhysicsBody(polygonFrom: forma.path!)
-        forma.physicsBody?.restitution = 0.2
-        forma.physicsBody?.categoryBitMask = 1
-        forma.physicsBody?.contactTestBitMask = 1
-        forma.physicsBody?.collisionBitMask = 1
-
-        forma.physicsBody?.applyImpulse(vetor)
-
-        formaSendoPreparada = nil
-        pontoInicialToque = nil
+        let forma = createForma(tipo: proximaFormaTipo, level: 1, position: pos)
+        addChild(forma)
 
         proximaFormaTipo = FormaGeometrica.allCases.randomElement() ?? .circulo
         mostrarProximaForma()
