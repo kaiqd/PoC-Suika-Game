@@ -14,21 +14,19 @@ class GameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let view = self.view as! SKView? {
-            // Load the SKScene from 'GameScene.sks'
-            if let scene = SKScene(fileNamed: "GameScene") {
-                // Set the scale mode to scale to fit the window
-                scene.scaleMode = .aspectFill
-                
-                // Present the scene
-                view.presentScene(scene)
-            }
-            
+        if let view = self.view as? SKView {
+            // Cria sua GameScene com o tamanho correto da tela
+            let scene = GameScene(size: view.bounds.size)
+            scene.scaleMode = .resizeFill
+
+            // Apresenta a cena corretamente
+            view.presentScene(scene)
+
             view.ignoresSiblingOrder = true
-            
             view.showsFPS = true
             view.showsNodeCount = true
         }
+
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
