@@ -19,8 +19,32 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var container: SKSpriteNode!
     var proximaFormaTipo: FormaGeometrica = .circulo
     var proximaFormaPreview: SKShapeNode?
-
+    var tituloLabel: SKLabelNode!
+    var scores: Int?
+    var tituloScores: SKLabelNode!
+    
     override func didMove(to view: SKView) {
+        
+        tituloLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+            tituloLabel.text = "Jogo de Formas"
+            tituloLabel.fontSize = 24
+            tituloLabel.fontColor = .white
+            tituloLabel.position = CGPoint(x: size.width / 2, y: size.height - 100)
+            tituloLabel.zPosition = 10
+            tituloLabel.horizontalAlignmentMode = .center
+            tituloLabel.verticalAlignmentMode = .center
+            addChild(tituloLabel)
+        
+        tituloLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+            tituloLabel.text = "Scores: \(scores ?? 0)"
+            tituloLabel.fontSize = 24
+            tituloLabel.fontColor = .white
+            tituloLabel.position = CGPoint(x: size.width / 2, y: size.height - 130)
+            tituloLabel.zPosition = 10
+            tituloLabel.horizontalAlignmentMode = .center
+            tituloLabel.verticalAlignmentMode = .center
+            addChild(tituloLabel)
+        
         backgroundColor = UIColor(red: 5/255, green: 10/255, blue: 20/255, alpha: 1)
         physicsWorld.contactDelegate = self
         physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
