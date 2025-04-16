@@ -57,27 +57,43 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func setupContainer() {
+        // tamanho do container
         let containerWidth = size.width * 0.9
         let containerHeight = size.height * 0.8
+        let containerSize = CGSize(width: containerWidth, height: containerHeight)
+        let containerPosition = CGPoint(x: size.width / 2, y: containerHeight / 2 + 20)
 
-        container = SKSpriteNode(color: .clear, size: CGSize(width: containerWidth, height: containerHeight))
-        container.position = CGPoint(x: size.width / 2, y: containerHeight / 2 + 20)
-
-        let physicsRect = CGRect(origin: CGPoint(x: -containerWidth / 2, y: -containerHeight / 2),
-                                 size: CGSize(width: containerWidth, height: containerHeight))
-        
-        container.physicsBody = SKPhysicsBody(edgeLoopFrom: physicsRect)
-        container.physicsBody?.isDynamic = false
-        addChild(container)
-
-        let background = SKShapeNode(rectOf: CGSize(width: containerWidth, height: containerHeight))
+        // visualizacao do container
+        let background = SKShapeNode(rectOf: containerSize)
         background.fillColor = UIColor.white.withAlphaComponent(0.05)
         background.strokeColor = UIColor.white
         background.lineWidth = 3
-        background.position = container.position
+        background.position = containerPosition
         background.zPosition = -1
         addChild(background)
+
+        let physicsBodies: [SKPhysicsBody] = [
+            // Base
+            SKPhysicsBody(edgeFrom: CGPoint(x: -containerWidth/2, y: -containerHeight/2),
+                          to: CGPoint(x: containerWidth/2, y: -containerHeight/2)),
+
+            // Lado esquerdo
+            SKPhysicsBody(edgeFrom: CGPoint(x: -containerWidth/2, y: -containerHeight/2),
+                          to: CGPoint(x: -containerWidth/2, y: containerHeight/2)),
+
+            // Lado direito
+            SKPhysicsBody(edgeFrom: CGPoint(x: containerWidth/2, y: -containerHeight/2),
+                          to: CGPoint(x: containerWidth/2, y: containerHeight/2)),
+        ]
+
+        let containerNode = SKNode()
+        containerNode.position = containerPosition
+        containerNode.physicsBody = SKPhysicsBody(bodies: physicsBodies)
+        containerNode.physicsBody?.isDynamic = false
+
+        addChild(containerNode)
     }
+
 
     func createForma(tipo: FormaGeometrica, level: Int, position: CGPoint) -> SKShapeNode {
         let tamanho = CGFloat(20 + (level - 1) * 10)
@@ -129,7 +145,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let x = touches.first?.location(in: self).x else { return }
-        let pos = CGPoint(x: x, y: size.height - 20)
+        let pos = CGPoint(x: x, y: size.height - 100)
 
         let forma = createForma(tipo: proximaFormaTipo, level: 1, position: pos)
         addChild(forma)
