@@ -19,8 +19,35 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var container: SKSpriteNode!
     var proximaFormaTipo: FormaGeometrica = .circulo
     var proximaFormaPreview: SKShapeNode?
-
+    var tituloLabel: SKLabelNode!
+    var score = 0 {
+        didSet {
+            scoreLabel.text = "Score: \(score)"
+        }
+    }
+    var scoreLabel: SKLabelNode!
+    
     override func didMove(to view: SKView) {
+        
+        tituloLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+            tituloLabel.text = "Jogo de Formas"
+            tituloLabel.fontSize = 24
+            tituloLabel.fontColor = .white
+            tituloLabel.position = CGPoint(x: size.width / 2, y: size.height - 100)
+            tituloLabel.zPosition = 10
+            tituloLabel.horizontalAlignmentMode = .center
+            tituloLabel.verticalAlignmentMode = .center
+            addChild(tituloLabel)
+        
+        scoreLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        scoreLabel.fontSize = 24
+        scoreLabel.fontColor = .white
+        scoreLabel.position = CGPoint(x: size.width / 2, y: size.height - 130)
+        scoreLabel.zPosition = 10
+        scoreLabel.horizontalAlignmentMode = .center
+        scoreLabel.verticalAlignmentMode = .center
+            addChild(scoreLabel)
+        
         backgroundColor = UIColor(red: 5/255, green: 10/255, blue: 20/255, alpha: 1)
         physicsWorld.contactDelegate = self
         physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
@@ -83,6 +110,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         forma.physicsBody?.contactTestBitMask = 1
         forma.physicsBody?.collisionBitMask = 1
 
+//        score += level
+        
         return forma
     }
 
@@ -129,6 +158,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let tipo = FormaGeometrica(rawValue: tipoA) ?? .circulo
         let novaForma = createForma(tipo: tipo, level: novoLevel, position: contact.contactPoint)
         addChild(novaForma)
+        
+        score += levelA
     }
 
     func extractLevel(from name: String) -> Int {
