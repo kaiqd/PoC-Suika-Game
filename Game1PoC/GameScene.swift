@@ -16,6 +16,10 @@ enum FormaGeometrica: String, CaseIterable {
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
+    var tempoInicial: TimeInterval?
+    var formasAguardando: Set<SKNode> = []
+    var limiteGameOverY: CGFloat = 0
+    var gameOver: Bool = false
     var container: SKSpriteNode!
     var proximaFormaTipo: FormaGeometrica = .circulo
     var proximaFormaPreview: SKShapeNode?
@@ -92,6 +96,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         containerNode.physicsBody?.isDynamic = false
 
         addChild(containerNode)
+        
+        let linhaLimite = SKShapeNode(rectOf: CGSize(width: containerWidth, height: 2))
+        linhaLimite.fillColor = .red
+        linhaLimite.strokeColor = .clear
+        linhaLimite.position = CGPoint(
+            x: containerPosition.x,
+            y: containerPosition.y + containerHeight / 2 - 10 // ajustado levemente abaixo da borda visual
+        )
+        linhaLimite.zPosition = 10
+        addChild(linhaLimite)
+        limiteGameOverY = linhaLimite.position.y
+
     }
 
 
@@ -144,7 +160,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let x = touches.first?.location(in: self).x else { return }
+        guard !gameOver, let x = touches.first?.location(in: self).x else { return }
         let pos = CGPoint(x: x, y: size.height - 100)
 
         let forma = createForma(tipo: proximaFormaTipo, level: 1, position: pos)
@@ -153,6 +169,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         proximaFormaTipo = FormaGeometrica.allCases.randomElement() ?? .circulo
         mostrarProximaForma()
     }
+
 
     func didBegin(_ contact: SKPhysicsContact) {
         guard let nodeA = contact.bodyA.node as? SKShapeNode,
@@ -181,4 +198,52 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func extractLevel(from name: String) -> Int {
         return Int(name.components(separatedBy: "_").last ?? "1") ?? 1
     }
+    
+    func encerrarJogo() {
+        gameOver = true
+
+        let label = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        label.text = "GAME OVER"
+        label.fontSize = 40
+        label.fontColor = .red
+        label.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        label.zPosition = 200
+        addChild(label)
+
+        proximaFormaPreview?.removeFromParent()
+    }
+
+    override func update(_ currentTime: TimeInterval) {
+        guard !gameOver else { return }
+
+        if tempoInicial == nil {
+            tempoInicial = currentTime
+            return
+        }
+
+        // Aguarda pelo menos 1 segundo após o início
+        if currentTime - tempoInicial! < 1 { return }
+
+        for node in children {
+            guard let forma = node as? SKShapeNode,
+                  forma.name?.contains("_") == true,
+                  let body = forma.physicsBody,
+                  body.isDynamic,
+                  body.isResting else { continue }
+
+            // Ignora se já foi analisada antes
+            if formasAguardando.contains(forma) { continue }
+
+            formasAguardando.insert(forma)
+
+            let topoDaForma = forma.position.y + forma.frame.height / 2
+
+            if topoDaForma > limiteGameOverY {
+                encerrarJogo()
+                break
+            }
+        }
+    }
+
+
 }
